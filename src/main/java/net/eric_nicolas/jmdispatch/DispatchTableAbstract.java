@@ -19,7 +19,7 @@ public class DispatchTableAbstract<FUNCTOR> {
     }
 
     public DispatchTableAbstract<FUNCTOR> autoregister(Class<?> aclass) {
-        var methods = aclass.getDeclaredMethods();
+        java.lang.reflect.Method[] methods = aclass.getDeclaredMethods();
         for (int i = 0; i < methods.length; ++i) {
             if (methods[i].getAnnotation(Dispatch.class) != null) {
                 autoregister(aclass, methods[i], i);
@@ -142,7 +142,7 @@ public class DispatchTableAbstract<FUNCTOR> {
             }
 
             // store the found matches for each equivalent distance
-            FoundMatches<FUNCTOR> matches = distances2matches.computeIfAbsent(distance, _ -> new FoundMatches<>());
+            FoundMatches<FUNCTOR> matches = distances2matches.computeIfAbsent(distance, k -> new FoundMatches<>());
             matches.functors.add(functors[i]);
             matches.distances.add(distance);
 
@@ -167,7 +167,7 @@ public class DispatchTableAbstract<FUNCTOR> {
             throw new DispatchAmbiguousException("Multiple dispatch matches found for: " + dump(types) + ". Ambiguous call. Possible matches are {" + sb + "}");
         }
         // only one match found => return it
-        return lowestDistanceMatches.functors.getFirst();
+        return lowestDistanceMatches.functors.get(0);
     }
 
     // --- Class<?> types helpers
@@ -180,9 +180,17 @@ public class DispatchTableAbstract<FUNCTOR> {
     static int distance(Class<?> targetType, Class<?> type) {
         if (!targetType.isAssignableFrom(type)) return -1;
         if (targetType == type) return 0;
-        for (int d = 0; ; ++d) {
-            type = type.getSuperclass();
-            if (type == targetType) return d + 1;
+        if (targetType.isInterface()) {
+            // BFS through superclass chain counting steps; interface match = first class where it appears
+            for (int d = 0; ; ++d) {
+                type = type.getSuperclass();
+                if (!targetType.isAssignableFrom(type)) return d + 1;
+            }
+        } else {
+            for (int d = 0; ; ++d) {
+                type = type.getSuperclass();
+                if (type == targetType) return d + 1;
+            }
         }
     }
 
@@ -219,6 +227,9 @@ public class DispatchTableAbstract<FUNCTOR> {
             else if (type == float.class) return Float.class;
             else if (type == double.class) return Double.class;
             else if (type == char.class) return Character.class;
+            else if (type == boolean.class) return Boolean.class;
+            else if (type == byte.class) return Byte.class;
+            else if (type == short.class) return Short.class;
             else throw new RuntimeException("Unhandled primitive type: " + type.getCanonicalName());
         } else {
             return type;

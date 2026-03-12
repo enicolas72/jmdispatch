@@ -41,12 +41,7 @@ public class TestFunctions3Native {
 
         out.close();
         String result = baos.toString();
-        String expected = """
-                i=1 l=5 A=1
-                f=2.0 d=3.0 B=2,3
-                f=2.0 d=3.0 B=4,5
-                i=1 l=5 A=2
-                """;
+        String expected = "i=1 l=5 A=1\nf=2.0 d=3.0 B=2,3\nf=2.0 d=3.0 B=4,5\ni=1 l=5 A=2\n";
         TestUtils.assertEquals(expected, result);
     }
 }

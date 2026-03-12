@@ -44,12 +44,7 @@ public class TestFunctions3 {
 
         out.close();
         String result = baos.toString();
-        String expected = """
-                A=1 B=2,3 X=7
-                A=1 C=4,5,6 Y=8,9
-                A=1 B=2,3 X=8
-                A=1 B=4,5 X=7
-                """;
+        String expected = "A=1 B=2,3 X=7\nA=1 C=4,5,6 Y=8,9\nA=1 B=2,3 X=8\nA=1 B=4,5 X=7\n";
         TestUtils.assertEquals(expected, result);
     }
 }

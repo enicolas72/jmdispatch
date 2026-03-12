@@ -39,12 +39,7 @@ public class TestFunctions2Native {
         f(1, b); // fallback dispatch to f_i_A
         out.close();
         String result = baos.toString();
-        String expected = """
-            i=1 A=1
-            d=2.0 B=2,3
-            d=2.0 B=4,5
-            i=1 A=2
-            """;
+        String expected = "i=1 A=1\nd=2.0 B=2,3\nd=2.0 B=4,5\ni=1 A=2\n";
         TestUtils.assertEquals(expected, result);
     }
 }

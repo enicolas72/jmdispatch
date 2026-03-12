@@ -1,4 +1,4 @@
-# JMDispatch
+ ; # JMDispatch
 
 A pure Java **multiple dispatch** (multimethod) framework that selects method implementations at runtime based on the actual types of all arguments, not just the receiver.
 
@@ -77,7 +77,7 @@ table.dispatch(arg1, arg2, arg3);
 
 ## Requirements
 
-- **Java 22+**
+- **Java 11+**
 - **Maven** for building
 
 ## Building
@@ -89,8 +89,8 @@ mvn clean package
 ## Dependencies
 
 - [ASM 9.9.1](https://asm.ow2.io/) — bytecode generation (compile-time + runtime)
-- [JUnit 4.13](https://junit.org/junit4/) — testing only
+- [JUnit 4.13.1](https://junit.org/junit4/) — testing only
 
 ## License
 
-See repository for license details.
+This project is licensed under the [GNU Lesser General Public License v3.0](LICENSE.txt) — you can use it in proprietary applications, but modifications to the library itself must remain open source.

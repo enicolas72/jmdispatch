@@ -42,12 +42,7 @@ public class TestFunctions2 {
 
         out.close();
         String result = baos.toString();
-        String expected = """
-                A=1 X=4
-                A=2 X=4
-                A=1 X=5
-                B=2,3 Y=5,6
-                """;
+        String expected = "A=1 X=4\nA=2 X=4\nA=1 X=5\nB=2,3 Y=5,6\n";
         TestUtils.assertEquals(expected, result);
     }
 }

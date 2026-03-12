@@ -4,6 +4,7 @@ public class DispatchTableN extends DispatchTableAbstract<FunctorN> {
 
     public DispatchTableN(int nTypes) {
         super(nTypes, FunctorN.class, new FunctorImplementationBuilderN(nTypes));
+        if (nTypes < 2) throw new RuntimeException("DispatchTableN should be used only with nTypes >= 2");
     }
 
     public DispatchTableN autoregister(Class<?> aclass) {
@@ -13,6 +14,13 @@ public class DispatchTableN extends DispatchTableAbstract<FunctorN> {
     public void dispatch(Object... values) {
         if (values.length != nTypes)
             throw new RuntimeException("Calling dispatch with " + values.length + " parameters for a dispatch(" + nTypes + ")");
+
+        // null arguments cannot be dispatched
+        for (int i = 0; i < values.length; ++i) {
+            if (values[i] == null) {
+                throw new DispatchNoMatchException("Cannot dispatch on null argument at position " + i);
+            }
+        }
 
         // search for exact match, pass-in values to delay the (costly) creation of Class<?>[] types
         FunctorN method = findExact(values);

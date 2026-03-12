@@ -67,7 +67,7 @@ public abstract class FunctorImplementationBuilderAbstract {
         String innerClassName = classOfFunctor.getCanonicalName().replace('.', '/');
 
         cv.visit(
-                Opcodes.V21,
+                Opcodes.V11,
                 Opcodes.ACC_PUBLIC + Opcodes.ACC_TRANSITIVE,
                 internalClassName,
                 null,
@@ -99,7 +99,7 @@ public abstract class FunctorImplementationBuilderAbstract {
 
     // generate FUNCTOR.f() overLoad
     protected void buildFOverload(ClassVisitor cv, Type targetClass, Method targetMethod, Type[] types) {
-        var methods = classOfFunctor.getDeclaredMethods();
+        java.lang.reflect.Method[] methods = classOfFunctor.getDeclaredMethods();
         assert methods.length == 1;
         Method m = Method.getMethod(methods[0]);
         GeneratorAdapter ga = new GeneratorAdapter(Opcodes.ACC_PUBLIC, m, null, null, cv);

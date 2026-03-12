@@ -11,6 +11,13 @@ public class DispatchTable2 extends DispatchTableAbstract<Functor2> {
     }
 
     public void dispatch(Object v1, Object v2) {
+        // null arguments cannot be dispatched
+        if (v1 == null || v2 == null) {
+            String t1 = v1 == null ? "null" : v1.getClass().getCanonicalName();
+            String t2 = v2 == null ? "null" : v2.getClass().getCanonicalName();
+            throw new DispatchNoMatchException("Cannot dispatch on null argument(s):  (" + t1 + "," + t2 + ") ");
+        }
+
         // search for exact match, pass-in individual types to delay the (costly) creation of Class<?>[] types
         Functor2 method = findExact(v1.getClass(), v2.getClass());
         if (method == null) {
