@@ -61,7 +61,7 @@ public class DispatchTableAbstract<FUNCTOR> {
     protected Class<?>[][] keys;
     protected FUNCTOR[] functors;
 
-    protected void append(Class<?>[] types, FUNCTOR functor) {
+    protected synchronized void append(Class<?>[] types, FUNCTOR functor) {
         int nt = keys.length;
         {
             Class<?>[][] array2 = new Class<?>[nt + 1][];
