@@ -10,7 +10,7 @@ public class DispatchTable2 extends DispatchTableAbstract<Functor2> {
         return (DispatchTable2) super.autoregister(aclass);
     }
 
-    public void dispatch(Object v1, Object v2) {
+    public Object dispatch(Object v1, Object v2) {
         // null arguments cannot be dispatched
         if (v1 == null || v2 == null) {
             String t1 = v1 == null ? "null" : v1.getClass().getCanonicalName();
@@ -30,7 +30,7 @@ public class DispatchTable2 extends DispatchTableAbstract<Functor2> {
         }
 
         // call the found method
-        method.f(v1, v2);
+        return method.f(v1, v2);
     }
 
     private Functor2 findExact(Class<?> type1, Class<?> type2) {

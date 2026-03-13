@@ -109,7 +109,17 @@ public abstract class FunctorImplementationBuilderAbstract {
         transferFunctorArguments(ga, types);
         // call the target
         ga.invokeStatic(targetClass, targetMethod);
-        //
+
+        // handle return value: functor returns Object, but target may return void or a primitive
+        Type returnType = targetMethod.getReturnType();
+        if (returnType.equals(Type.VOID_TYPE)) {
+            // void target => return null
+            ga.visitInsn(Opcodes.ACONST_NULL);
+        } else if (returnType.getSort() != Type.OBJECT && returnType.getSort() != Type.ARRAY) {
+            // primitive target => box it
+            ga.box(returnType);
+        }
+        // reference target => already an Object on the stack
         ga.returnValue();
         ga.endMethod();
     }

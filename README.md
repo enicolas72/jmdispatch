@@ -1,4 +1,4 @@
- ; # JMDispatch
+# JMDispatch
 
 A pure Java **multiple dispatch** (multimethod) framework that selects method implementations at runtime based on the actual types of all arguments, not just the receiver.
 
@@ -46,6 +46,20 @@ public class Collisions {
 
 When `handleCollision` is called with a `Circle` and a `Rectangle`, JMDispatch routes to the specific `(Circle, Rectangle)` handler. If no exact match exists, it falls back to the closest ancestor match.
 
+### Return values
+
+Handlers can return any type. The return value is boxed and returned as `Object` from `dispatch()`. Void handlers return `null`.
+
+```java
+@Dispatch
+public static int area(Circle c, Scale s) {
+    return (int)(Math.PI * c.radius * c.radius * s.factor);
+}
+
+// ...
+Object result = table.dispatch(myCircle, myScale); // returns a boxed Integer
+```
+
 ### Three-or-more-argument dispatch
 
 ```java
@@ -53,7 +67,7 @@ private static final DispatchTableN table =
     new DispatchTableN(3).autoregister(MyHandlers.class);
 
 // Dispatch on three arguments
-table.dispatch(arg1, arg2, arg3);
+Object result = table.dispatch(arg1, arg2, arg3);
 ```
 
 ## Dispatch Algorithm

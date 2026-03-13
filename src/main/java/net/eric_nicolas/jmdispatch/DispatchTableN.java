@@ -11,7 +11,7 @@ public class DispatchTableN extends DispatchTableAbstract<FunctorN> {
         return (DispatchTableN) super.autoregister(aclass);
     }
 
-    public void dispatch(Object... values) {
+    public Object dispatch(Object... values) {
         if (values.length != nTypes)
             throw new RuntimeException("Calling dispatch with " + values.length + " parameters for a dispatch(" + nTypes + ")");
 
@@ -34,7 +34,7 @@ public class DispatchTableN extends DispatchTableAbstract<FunctorN> {
         }
 
         // call the found method
-        method.f(values);
+        return method.f(values);
     }
 
     private FunctorN findExact(Object[] values) {
