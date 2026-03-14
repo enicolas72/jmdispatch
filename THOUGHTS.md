@@ -17,4 +17,4 @@
 
 This is a production-quality library with a tight scope. The core dispatch algorithm is sound, the ASM codegen is zero-overhead, and the hot path benchmarks at ~2-7 ns/op depending on table size. It supports static and instance handlers, return values (object, primitive, void), thread-safe caching, and validates everything at registration time with typed exceptions. 20 test files cover happy paths, error cases, and edge cases thoroughly.
 
-What remains before publishing to Maven Central would be packaging concerns — javadoc on public API, CI, release versioning, distribution config — not quality concerns. The core is solid and ready for real use in event handling, message routing, or any dispatch-heavy pattern.
+Packaging for Maven Central is in place: javadoc on all public APIs, source/javadoc JAR generation, GPG signing via `-Prelease` profile, CI on Java 11/17/21, version set to 1.0. What remains is creating a Sonatype account, claiming the `net.eric-nicolas` namespace, and running the first `mvn -Prelease deploy`.

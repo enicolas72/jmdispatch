@@ -8,8 +8,24 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Base class for dispatch tables, containing the registration logic, dispatch algorithm,
+ * and thread-safe caching.
+ *
+ * <p>This class is not intended for direct use. Use {@link DispatchTable2} for 2-argument
+ * dispatch or {@link DispatchTableN} for N-argument dispatch.
+ *
+ * @param <FUNCTOR> the functor interface type ({@link Functor2} or {@link FunctorN})
+ */
 public class DispatchTableAbstract<FUNCTOR> {
 
+    /**
+     * Creates a new dispatch table.
+     *
+     * @param nTypes the number of dispatch arguments
+     * @param classOfFunctor the functor interface class
+     * @param functorImplementationBuilder the ASM bytecode generator for functor implementations
+     */
     public DispatchTableAbstract(int nTypes, Class<?> classOfFunctor, FunctorImplementationBuilderAbstract functorImplementationBuilder) {
         this.nTypes = nTypes;
         this.classOfFunctor = classOfFunctor;
@@ -19,10 +35,27 @@ public class DispatchTableAbstract<FUNCTOR> {
         this.functors = (FUNCTOR[]) Array.newInstance(classOfFunctor, 0);
     }
 
+    /**
+     * Registers all static {@link Dispatch @Dispatch}-annotated methods from the given class.
+     *
+     * @param aclass the class to scan for static {@code @Dispatch} methods
+     * @return this table, for chaining
+     * @throws InvalidDispatchException if any annotated method is invalid
+     */
     public DispatchTableAbstract<FUNCTOR> autoregister(Class<?> aclass) {
         return autoregister(aclass, null);
     }
 
+    /**
+     * Registers all {@link Dispatch @Dispatch}-annotated methods from the given instance.
+     *
+     * <p>Instance methods are bound to the provided object. Static methods in the same
+     * class are also registered.
+     *
+     * @param instance the object whose class is scanned and whose instance methods are bound
+     * @return this table, for chaining
+     * @throws InvalidDispatchException if any annotated method is invalid
+     */
     public DispatchTableAbstract<FUNCTOR> autoregister(Object instance) {
         return autoregister(instance.getClass(), instance);
     }
