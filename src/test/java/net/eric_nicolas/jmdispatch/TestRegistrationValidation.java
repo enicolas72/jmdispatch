@@ -15,7 +15,7 @@ public class TestRegistrationValidation {
         public static void handle(Printable p, A a) {}
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test(expected = InvalidDispatchException.class)
     public void testInterfaceParameterTypeRejected() {
         new DispatchTable2().autoregister(InterfaceParamHandler.class);
     }
@@ -25,7 +25,7 @@ public class TestRegistrationValidation {
         public static void handle(A a, Printable p) {}
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test(expected = InvalidDispatchException.class)
     public void testInterfaceSecondParameterTypeRejected() {
         new DispatchTable2().autoregister(InterfaceSecondParamHandler.class);
     }
@@ -41,7 +41,7 @@ public class TestRegistrationValidation {
         public static void handle(AbstractShape s, A a) {}
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test(expected = InvalidDispatchException.class)
     public void testAbstractParameterTypeRejected() {
         new DispatchTable2().autoregister(AbstractParamHandler.class);
     }
@@ -53,7 +53,7 @@ public class TestRegistrationValidation {
         public abstract void handle(A a, X x);
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test(expected = InvalidDispatchException.class)
     public void testAbstractDispatchMethodRejected() {
         // Can't instantiate abstract class, but autoregister(Class) should reject
         // the abstract method before getting that far
@@ -67,7 +67,7 @@ public class TestRegistrationValidation {
         public static void handle(A a, Printable p, X x) {}
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test(expected = InvalidDispatchException.class)
     public void testInterfaceParameterTypeRejectedN() {
         new DispatchTableN(3).autoregister(InterfaceParamHandlerN.class);
     }

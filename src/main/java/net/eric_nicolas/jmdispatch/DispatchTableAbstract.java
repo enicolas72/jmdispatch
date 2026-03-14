@@ -36,12 +36,12 @@ public class DispatchTableAbstract<FUNCTOR> {
 
                 // @Dispatch methods must be concrete (not abstract)
                 if (Modifier.isAbstract(modifiers)) {
-                    throw new RuntimeException("@Dispatch method must be concrete, not abstract: " + fullName);
+                    throw new InvalidDispatchException("@Dispatch method must be concrete, not abstract: " + fullName);
                 }
 
                 boolean isStatic = Modifier.isStatic(modifiers);
                 if (!isStatic && instance == null) {
-                    throw new RuntimeException("Instance method " + fullName
+                    throw new InvalidDispatchException("Instance method " + fullName
                             + " requires autoregister(instance), not autoregister(Class)");
                 }
 
@@ -50,49 +50,53 @@ public class DispatchTableAbstract<FUNCTOR> {
                 for (int t = 0; t < parameters.length; ++t) {
                     Class<?> paramType = primitiveToBoxed(parameters[t].getType());
                     if (paramType.isInterface()) {
-                        throw new RuntimeException("@Dispatch parameter types must be concrete classes, not interfaces: "
+                        throw new InvalidDispatchException("@Dispatch parameter types must be concrete classes, not interfaces: "
                                 + fullName + " parameter " + t + " (" + paramType.getCanonicalName() + ")");
                     }
                     if (Modifier.isAbstract(paramType.getModifiers())) {
-                        throw new RuntimeException("@Dispatch parameter types must be concrete classes, not abstract: "
+                        throw new InvalidDispatchException("@Dispatch parameter types must be concrete classes, not abstract: "
                                 + fullName + " parameter " + t + " (" + paramType.getCanonicalName() + ")");
                     }
                 }
 
-                autoregister(aclass, methods[i], i, isStatic, instance);
+                registerMethod(aclass, methods[i], i, isStatic ? null : instance);
             }
         }
         return this;
     }
 
-    private void autoregister(Class<?> aclass, java.lang.reflect.Method method, int i, boolean isStatic, Object instance) {
+    private void registerMethod(Class<?> aclass, java.lang.reflect.Method method, int i, Object instance) {
+        Class<?> functorImplementation = functorImplementationBuilder.buildLambaImplementationClass(aclass, method, i, instance == null);
+        FUNCTOR functor = instanciateFunctor(functorImplementation, instance);
+
+        //
+        Parameter[] parameters = method.getParameters();
+        Class<?>[] types = new Class<?>[nTypes];
+        for (int t = 0; t < nTypes; ++t) types[t] = primitiveToBoxed(parameters[t].getType());
+
+        // check that the method is not already registered
+        for (Class<?>[] key : keys) {
+            if (equals(key, types)) {
+                throw new InvalidDispatchException("Registering a method on an already existing types signature " + dump(types));
+            }
+        }
+
+        // register the method
+        append(types, functor);
+    }
+
+    private FUNCTOR instanciateFunctor(Class<?> functorImplementation, Object instance) {
         try {
-            Class<?> functorImplementation = functorImplementationBuilder.buildLambaImplementationClass(aclass, method, i, isStatic);
-            FUNCTOR functor;
-            if (isStatic) {
+            if (instance == null) {
                 // noinspection unchecked
-                functor = (FUNCTOR) functorImplementation.getDeclaredConstructors()[0].newInstance();
+                return (FUNCTOR) functorImplementation.getDeclaredConstructors()[0].newInstance();
             } else {
                 // noinspection unchecked
-                functor = (FUNCTOR) functorImplementation.getDeclaredConstructors()[0].newInstance(instance);
+                return (FUNCTOR) functorImplementation.getDeclaredConstructors()[0].newInstance(instance);
             }
-
-            //
-            Parameter[] parameters = method.getParameters();
-            Class<?>[] types = new Class<?>[nTypes];
-            for (int t = 0; t < nTypes; ++t) types[t] = primitiveToBoxed(parameters[t].getType());
-
-            // check that the method is not already registered
-            for (Class<?>[] key : keys) {
-                if (equals(key, types)) {
-                    throw new RuntimeException("Registering a method on an already existing types signature " + dump(types));
-                }
-            }
-
-            // register the method
-            append(types, functor);
         } catch (Throwable e) {
-            throw new RuntimeException("Cannot autoregister: " + aclass.getCanonicalName() + "." + method.getName(), e);
+            // should never happen, by construction
+            throw new RuntimeException("Cannot instantiate functor implementation", e);
         }
     }
 

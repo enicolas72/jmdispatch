@@ -104,6 +104,9 @@ Object result = table.dispatch(arg1, arg2, arg3);
 - Throws `DispatchAmbiguousException` if multiple handlers tie
 - Throws `DispatchNoMatchException` if no compatible handler exists
 - **Caches** resolved dispatches for fast repeated lookups
+- Handler parameter types must be **concrete classes** (not interfaces or abstract classes)
+- `@Dispatch` methods must be **concrete** (not abstract)
+- All errors are typed: `InvalidDispatchException` at registration, `DispatchNoMatchException` / `DispatchAmbiguousException` at dispatch
 
 ## API Reference
 
@@ -114,6 +117,7 @@ Object result = table.dispatch(arg1, arg2, arg3);
 | `DispatchTableN` | Dispatch table for N-argument dispatch (N specified at construction) |
 | `DispatchNoMatchException` | Thrown when no handler matches the argument types |
 | `DispatchAmbiguousException` | Thrown when multiple handlers match with equal distance |
+| `InvalidDispatchException` | Thrown when handler registration is invalid (abstract method, interface/abstract parameter type, etc.) |
 
 ## Requirements
 

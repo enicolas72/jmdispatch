@@ -11,6 +11,7 @@
 ## Design decisions
 
 - **No interface or abstract parameter types.** Dispatch operates on concrete class hierarchies only. The inheritance distance is computed by walking the superclass chain (`getSuperclass()`), which is well-defined and unambiguous for concrete classes — each class has exactly one superclass path to `Object`. Interfaces would introduce multiple inheritance paths (diamond problem), making distance computation ambiguous and order-dependent. Since you always dispatch on *actual objects* (which are always instances of concrete classes), restricting handler parameter types to concrete classes is both simpler and correct. Registration rejects interface and abstract parameter types at autoregister time.
+- **Typed exceptions.** All exceptions are typed: `DispatchNoMatchException` and `DispatchAmbiguousException` for dispatch-time errors, `InvalidDispatchException` for registration-time validation errors (abstract methods, interface/abstract parameter types, duplicate signatures, wrong argument count). No raw `RuntimeException` in user-facing paths.
 
 ## Overall
 

@@ -45,7 +45,7 @@ public class TestInstanceMethodsMixed {
         }
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test(expected = InvalidDispatchException.class)
     public void testInstanceMethodWithClassRegistrationThrows() {
         new DispatchTable2().autoregister(InstanceOnlyHandler.class);
     }

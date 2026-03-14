@@ -37,7 +37,7 @@ public abstract class FunctorImplementationBuilderAbstract {
         // get the types of the method's parameters
         Parameter[] parameters = amethod.getParameters();
         if (parameters.length != nTypes) {
-            throw new RuntimeException("Method marked with @Dispatch with number of arguments <> " + nTypes + ": " + amethod.getName());
+            throw new InvalidDispatchException("Method marked with @Dispatch with number of arguments <> " + nTypes + ": " + amethod.getName());
         }
         Type[] types = new Type[nTypes];
         for (int i = 0; i < nTypes; ++i) types[i] = Type.getType(parameters[i].getType());
