@@ -5,7 +5,16 @@ import static net.eric_nicolas.jmdispatch.TestUtils.*;
 /**
  * Hand-rolled microbenchmark for JMDispatch.
  *
- * Run via bench.sh which launches each scenario in a separate JVM.
+ * Run all scenarios from main(). Each scenario is self-contained within
+ * a single JVM — profile pollution between scenarios is minimal since
+ * the JIT compiles each dispatch table independently.
+ *
+ * Recommended JVM flags: -XX:+UseSerialGC -Xms512m -Xmx512m
+ *
+ * From IntelliJ: right-click and "Run DispatchBenchmark.main()"
+ * From command line: mvn -q test-compile && java -XX:+UseSerialGC -Xms512m -Xmx512m \
+ *   -cp $(mvn -q dependency:build-classpath -Dmdep.outputFile=/dev/stdout):target/classes:target/test-classes \
+ *   net.eric_nicolas.jmdispatch.DispatchBenchmark
  */
 public class DispatchBenchmark {
 
@@ -124,7 +133,6 @@ public class DispatchBenchmark {
     }
 
     static void benchScaling2(DispatchTable2 table) {
-        // Dispatch exact hit on first registered handler
         A a = new A(1);
         X x = new X(2);
         for (int i = 0; i < OPS_PER_ITERATION; i++) {
@@ -194,54 +202,50 @@ public class DispatchBenchmark {
 
     // ── Scenarios ────────────────────────────────────────────────────────
 
-    static void scenario1_exactHit2() {
+    static void scenario_exactHit2() {
         DispatchTable2 table = new DispatchTable2();
         table.autoregister(Handlers2_Size2.class);
         table.dispatch(new A(0), new X(0));
         measure("exactHit2arg", null, () -> benchExactHit2(table));
     }
 
-    static void scenario2_exactHitN() {
+    static void scenario_exactHitN() {
         DispatchTableN table = new DispatchTableN(3);
         table.autoregister(HandlersN_Size2.class);
         table.dispatch(new A(0), new X(0), new A(0));
         measure("exactHitN(3)arg", null, () -> benchExactHitN(table));
     }
 
-    static void scenario3_coldFallback2() {
+    static void scenario_coldFallback2() {
         final DispatchTable2[][] holder = new DispatchTable2[1][];
         measure("coldFallback2arg", COLD_OPS_PER_ITERATION,
                 () -> holder[0] = makeColdTables2(COLD_OPS_PER_ITERATION),
                 () -> benchColdFallback2(holder[0]));
     }
 
-    static void scenario4_coldFallbackN() {
+    static void scenario_coldFallbackN() {
         final DispatchTableN[][] holder = new DispatchTableN[1][];
         measure("coldFallbackN(3)arg", COLD_OPS_PER_ITERATION,
                 () -> holder[0] = makeColdTablesN(COLD_OPS_PER_ITERATION),
                 () -> benchColdFallbackN(holder[0]));
     }
 
-    static void scenario5_scaling() {
-        // 2 handlers
+    static void scenario_scaling() {
         DispatchTable2 t2 = new DispatchTable2();
         t2.autoregister(Handlers2_Size2.class);
         t2.dispatch(new A(0), new X(0));
         measure("scaling_2handlers", null, () -> benchScaling2(t2));
 
-        // 5 handlers
         DispatchTable2 t5 = new DispatchTable2();
         t5.autoregister(Handlers2_Size5.class);
         t5.dispatch(new A(0), new X(0));
         measure("scaling_5handlers", null, () -> benchScaling2(t5));
 
-        // 10 handlers
         DispatchTable2 t10 = new DispatchTable2();
         t10.autoregister(Handlers2_Size10.class);
         t10.dispatch(new A(0), new X(0));
         measure("scaling_10handlers", null, () -> benchScaling2(t10));
 
-        // 20 handlers
         DispatchTable2 t20 = new DispatchTable2();
         t20.autoregister(Handlers2_Size20.class);
         t20.dispatch(new A(0), new X(0));
@@ -251,29 +255,26 @@ public class DispatchBenchmark {
     // ── Main ─────────────────────────────────────────────────────────────
 
     public static void main(String[] args) {
-        if (args.length == 0) {
-            System.err.println("Usage: DispatchBenchmark <scenario>");
-            System.err.println("Scenarios: exactHit2, exactHitN, coldFallback2, coldFallbackN, scaling");
-            System.exit(1);
-        }
-
-        String scenario = args[0];
-        boolean cold = scenario.startsWith("coldFallback");
-        int ops = cold ? COLD_OPS_PER_ITERATION : OPS_PER_ITERATION;
-        System.out.println("# Scenario: " + scenario);
-        System.out.println("# Warmup: " + WARMUP_ITERATIONS + " x " + ops + " ops");
-        System.out.println("# Measurement: " + MEASUREMENT_ITERATIONS + " x " + ops + " ops");
+        System.out.println("============================================================");
+        System.out.println("  JMDispatch Microbenchmark");
+        System.out.println("  Warmup: " + WARMUP_ITERATIONS + " iterations, Measurement: " + MEASUREMENT_ITERATIONS + " iterations");
+        System.out.println("============================================================");
         System.out.println();
 
-        switch (scenario) {
-            case "exactHit2":      scenario1_exactHit2(); break;
-            case "exactHitN":      scenario2_exactHitN(); break;
-            case "coldFallback2":  scenario3_coldFallback2(); break;
-            case "coldFallbackN":  scenario4_coldFallbackN(); break;
-            case "scaling":        scenario5_scaling(); break;
-            default:
-                System.err.println("Unknown scenario: " + scenario);
-                System.exit(1);
-        }
+        System.out.println("--- Exact hit (warm cache) ---");
+        scenario_exactHit2();
+        scenario_exactHitN();
+        System.out.println();
+
+        System.out.println("--- Cold fallback (findClosest, " + COLD_OPS_PER_ITERATION + " ops/iter) ---");
+        scenario_coldFallback2();
+        scenario_coldFallbackN();
+        System.out.println();
+
+        System.out.println("--- Table size scaling (exact hit) ---");
+        scenario_scaling();
+        System.out.println();
+
+        System.out.println("=== Done ===");
     }
 }
