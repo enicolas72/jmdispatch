@@ -30,7 +30,7 @@ public abstract class FunctorImplementationBuilderAbstract {
         }
     }
 
-    static final MyClassLoader MY_CLASS_LOADER = new MyClassLoader();
+    final MyClassLoader MY_CLASS_LOADER = new MyClassLoader();
 
     Class<?> buildLambaImplementationClass(Class<?> aclass, java.lang.reflect.Method amethod, int n) {
         // get the types of the method's parameters
