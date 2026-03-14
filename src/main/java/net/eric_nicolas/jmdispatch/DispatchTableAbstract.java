@@ -1,6 +1,7 @@
 package net.eric_nicolas.jmdispatch;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,20 +20,39 @@ public class DispatchTableAbstract<FUNCTOR> {
     }
 
     public DispatchTableAbstract<FUNCTOR> autoregister(Class<?> aclass) {
+        return autoregister(aclass, null);
+    }
+
+    public DispatchTableAbstract<FUNCTOR> autoregister(Object instance) {
+        return autoregister(instance.getClass(), instance);
+    }
+
+    private DispatchTableAbstract<FUNCTOR> autoregister(Class<?> aclass, Object instance) {
         java.lang.reflect.Method[] methods = aclass.getDeclaredMethods();
         for (int i = 0; i < methods.length; ++i) {
             if (methods[i].getAnnotation(Dispatch.class) != null) {
-                autoregister(aclass, methods[i], i);
+                boolean isStatic = Modifier.isStatic(methods[i].getModifiers());
+                if (!isStatic && instance == null) {
+                    throw new RuntimeException("Instance method " + aclass.getCanonicalName() + "." + methods[i].getName()
+                            + " requires autoregister(instance), not autoregister(Class)");
+                }
+                autoregister(aclass, methods[i], i, isStatic, instance);
             }
         }
         return this;
     }
 
-    private void autoregister(Class<?> aclass, java.lang.reflect.Method method, int i) {
+    private void autoregister(Class<?> aclass, java.lang.reflect.Method method, int i, boolean isStatic, Object instance) {
         try {
-            Class<?> functorImplementation = functorImplementationBuilder.buildLambaImplementationClass(aclass, method, i);
-            // noinspection unchecked
-            FUNCTOR functor = (FUNCTOR) functorImplementation.getDeclaredConstructors()[0].newInstance();
+            Class<?> functorImplementation = functorImplementationBuilder.buildLambaImplementationClass(aclass, method, i, isStatic);
+            FUNCTOR functor;
+            if (isStatic) {
+                // noinspection unchecked
+                functor = (FUNCTOR) functorImplementation.getDeclaredConstructors()[0].newInstance();
+            } else {
+                // noinspection unchecked
+                functor = (FUNCTOR) functorImplementation.getDeclaredConstructors()[0].newInstance(instance);
+            }
 
             //
             Parameter[] parameters = method.getParameters();

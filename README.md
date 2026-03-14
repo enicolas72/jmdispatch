@@ -6,38 +6,34 @@ Java's built-in virtual dispatch is single dispatch — the method called depend
 
 ## How It Works
 
-1. Annotate static methods with `@Dispatch`
-2. Create a dispatch table and auto-register handlers from a class
+1. Annotate methods with `@Dispatch` (static or instance)
+2. Create a dispatch table and auto-register handlers from a class or instance
 3. Call `dispatch(...)` — the framework finds the closest matching handler by computing inheritance distance across all arguments
 
-Under the hood, JMDispatch uses **ASM bytecode generation** to create functor implementations that invoke your static methods, avoiding reflection overhead at dispatch time.
+Under the hood, JMDispatch uses **ASM bytecode generation** to create functor implementations that invoke your methods directly, avoiding reflection overhead at dispatch time.
 
 ## Quick Start
 
-### Two-argument dispatch
+### Static handlers
 
 ```java
 import net.eric_nicolas.jmdispatch.*;
 
 public class Collisions {
 
-    // Handler for the general case
     @Dispatch
     public static void collide(Shape a, Shape b) {
         System.out.println("Generic shape collision");
     }
 
-    // Handler for a specific combination
     @Dispatch
     public static void collide(Circle a, Rectangle b) {
         System.out.println("Circle-Rectangle collision");
     }
 
-    // Build the dispatch table once
     private static final DispatchTable2 table =
         new DispatchTable2().autoregister(Collisions.class);
 
-    // Public API — dispatches based on runtime types of both arguments
     public static void handleCollision(Shape a, Shape b) {
         table.dispatch(a, b);
     }
@@ -45,6 +41,36 @@ public class Collisions {
 ```
 
 When `handleCollision` is called with a `Circle` and a `Rectangle`, JMDispatch routes to the specific `(Circle, Rectangle)` handler. If no exact match exists, it falls back to the closest ancestor match.
+
+### Instance handlers
+
+Handlers can be instance methods, giving them natural access to instance state:
+
+```java
+public class CollisionHandler {
+    private final Logger log;
+
+    public CollisionHandler(Logger log) { this.log = log; }
+
+    @Dispatch
+    public void collide(Shape a, Shape b) {
+        log.info("Generic shape collision");
+    }
+
+    @Dispatch
+    public void collide(Circle a, Rectangle b) {
+        log.info("Circle-Rectangle collision");
+    }
+}
+
+// Register an instance — its @Dispatch methods are bound to it
+DispatchTable2 table = new DispatchTable2()
+    .autoregister(new CollisionHandler(myLogger));
+
+table.dispatch(myCircle, myRect); // calls instance method on the registered handler
+```
+
+Static and instance `@Dispatch` methods can coexist in the same class.
 
 ### Return values
 
@@ -63,10 +89,10 @@ Object result = table.dispatch(myCircle, myScale); // returns a boxed Integer
 ### Three-or-more-argument dispatch
 
 ```java
-private static final DispatchTableN table =
-    new DispatchTableN(3).autoregister(MyHandlers.class);
+DispatchTableN table = new DispatchTableN(3)
+    .autoregister(MyHandlers.class);    // static handlers
+    // or .autoregister(new MyHandlers());  // instance handlers
 
-// Dispatch on three arguments
 Object result = table.dispatch(arg1, arg2, arg3);
 ```
 
@@ -83,7 +109,7 @@ Object result = table.dispatch(arg1, arg2, arg3);
 
 | Class | Description |
 |---|---|
-| `@Dispatch` | Annotation to mark static methods as dispatch handlers |
+| `@Dispatch` | Annotation to mark methods (static or instance) as dispatch handlers |
 | `DispatchTable2` | Dispatch table optimized for 2-argument dispatch |
 | `DispatchTableN` | Dispatch table for N-argument dispatch (N specified at construction) |
 | `DispatchNoMatchException` | Thrown when no handler matches the argument types |

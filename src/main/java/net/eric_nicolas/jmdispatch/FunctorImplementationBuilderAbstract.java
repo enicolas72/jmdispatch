@@ -9,6 +9,7 @@ import org.objectweb.asm.commons.Method;
 import org.objectweb.asm.util.TraceClassVisitor;
 
 import java.io.PrintWriter;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 
 public abstract class FunctorImplementationBuilderAbstract {
@@ -32,7 +33,7 @@ public abstract class FunctorImplementationBuilderAbstract {
 
     final MyClassLoader MY_CLASS_LOADER = new MyClassLoader();
 
-    Class<?> buildLambaImplementationClass(Class<?> aclass, java.lang.reflect.Method amethod, int n) {
+    Class<?> buildLambaImplementationClass(Class<?> aclass, java.lang.reflect.Method amethod, int n, boolean isStatic) {
         // get the types of the method's parameters
         Parameter[] parameters = amethod.getParameters();
         if (parameters.length != nTypes) {
@@ -52,9 +53,9 @@ public abstract class FunctorImplementationBuilderAbstract {
         if (TRACE_ASM) {
             PrintWriter pw = new PrintWriter(System.out);
             TraceClassVisitor tc = new TraceClassVisitor(cw, pw);
-            buildLambdaClass(tc, className, targetClass, targetMethod, types);
+            buildLambdaClass(tc, className, targetClass, targetMethod, types, isStatic);
         } else {
-            buildLambdaClass(cw, className, targetClass, targetMethod, types);
+            buildLambdaClass(cw, className, targetClass, targetMethod, types, isStatic);
         }
         byte[] byteCode = cw.toByteArray();
 
@@ -62,7 +63,9 @@ public abstract class FunctorImplementationBuilderAbstract {
         return MY_CLASS_LOADER.defineClass(className, byteCode);
     }
 
-    private void buildLambdaClass(ClassVisitor cv, String className, Type targetClass, Method targetMethod, Type[] types) {
+    private static final String TARGET_FIELD = "target";
+
+    private void buildLambdaClass(ClassVisitor cv, String className, Type targetClass, Method targetMethod, Type[] types, boolean isStatic) {
         String internalClassName = className.replace('.', '/');
         String innerClassName = classOfFunctor.getCanonicalName().replace('.', '/');
 
@@ -76,15 +79,22 @@ public abstract class FunctorImplementationBuilderAbstract {
                 // implements FUNCTOR
                 new String[]{innerClassName});
 
-        // add constructor and f() overload
-        buildDefaultConstructor(cv);
-        buildFOverload(cv, targetClass, targetMethod, types);
+        if (isStatic) {
+            buildDefaultConstructor(cv);
+        } else {
+            // add a field to hold the handler instance
+            cv.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL, TARGET_FIELD,
+                    otype.getDescriptor(), null, null).visitEnd();
+            buildInstanceConstructor(cv, internalClassName);
+        }
+
+        buildFOverload(cv, internalClassName, targetClass, targetMethod, types, isStatic);
 
         // finalize the class
         cv.visitEnd();
     }
 
-    // generate default constructor
+    // generate the default no-arg constructor (for static handlers)
     private void buildDefaultConstructor(ClassVisitor cv) {
         Method m = Method.getMethod("void <init>()");
         GeneratorAdapter ga = new GeneratorAdapter(Opcodes.ACC_PUBLIC, m, null, null, cv);
@@ -97,18 +107,46 @@ public abstract class FunctorImplementationBuilderAbstract {
         ga.endMethod();
     }
 
-    // generate FUNCTOR.f() overLoad
-    protected void buildFOverload(ClassVisitor cv, Type targetClass, Method targetMethod, Type[] types) {
+    // generate the constructor that takes the handler instance (for instance handlers)
+    private void buildInstanceConstructor(ClassVisitor cv, String internalClassName) {
+        Method m = Method.getMethod("void <init>(Object)");
+        GeneratorAdapter ga = new GeneratorAdapter(Opcodes.ACC_PUBLIC, m, null, null, cv);
+        // call super()
+        ga.loadThis();
+        ga.invokeConstructor(otype, Method.getMethod("void <init>()"));
+        // this.target = arg0
+        ga.loadThis();
+        ga.loadArg(0);
+        ga.putField(Type.getObjectType(internalClassName), TARGET_FIELD, otype);
+        //
+        ga.returnValue();
+        ga.endMethod();
+    }
+
+    // generate FUNCTOR.f() overload
+    protected void buildFOverload(ClassVisitor cv, String internalClassName, Type targetClass, Method targetMethod, Type[] types, boolean isStatic) {
         java.lang.reflect.Method[] methods = classOfFunctor.getDeclaredMethods();
         assert methods.length == 1;
         Method m = Method.getMethod(methods[0]);
         GeneratorAdapter ga = new GeneratorAdapter(Opcodes.ACC_PUBLIC, m, null, null, cv);
 
+        if (!isStatic) {
+            // load this.target and cast to the handler class
+            ga.loadThis();
+            ga.getField(Type.getObjectType(internalClassName), TARGET_FIELD, otype);
+            ga.checkCast(targetClass);
+        }
+
         // transfer target's arguments onto the stack
         // call an abstract method: actual arguments transfer differ whether it's -2 or -N implementation
         transferFunctorArguments(ga, types);
+
         // call the target
-        ga.invokeStatic(targetClass, targetMethod);
+        if (isStatic) {
+            ga.invokeStatic(targetClass, targetMethod);
+        } else {
+            ga.invokeVirtual(targetClass, targetMethod);
+        }
 
         // handle return value: functor returns Object, but target may return void or a primitive
         Type returnType = targetMethod.getReturnType();

@@ -11,6 +11,10 @@ public class DispatchTableN extends DispatchTableAbstract<FunctorN> {
         return (DispatchTableN) super.autoregister(aclass);
     }
 
+    public DispatchTableN autoregister(Object instance) {
+        return (DispatchTableN) super.autoregister(instance);
+    }
+
     public Object dispatch(Object... values) {
         if (values.length != nTypes)
             throw new RuntimeException("Calling dispatch with " + values.length + " parameters for a dispatch(" + nTypes + ")");

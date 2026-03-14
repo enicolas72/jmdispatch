@@ -10,6 +10,10 @@ public class DispatchTable2 extends DispatchTableAbstract<Functor2> {
         return (DispatchTable2) super.autoregister(aclass);
     }
 
+    public DispatchTable2 autoregister(Object instance) {
+        return (DispatchTable2) super.autoregister(instance);
+    }
+
     public Object dispatch(Object v1, Object v2) {
         // null arguments cannot be dispatched
         if (v1 == null || v2 == null) {
