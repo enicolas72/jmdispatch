@@ -31,11 +31,34 @@ public class DispatchTableAbstract<FUNCTOR> {
         java.lang.reflect.Method[] methods = aclass.getDeclaredMethods();
         for (int i = 0; i < methods.length; ++i) {
             if (methods[i].getAnnotation(Dispatch.class) != null) {
-                boolean isStatic = Modifier.isStatic(methods[i].getModifiers());
+                int modifiers = methods[i].getModifiers();
+                String fullName = aclass.getCanonicalName() + "." + methods[i].getName();
+
+                // @Dispatch methods must be concrete (not abstract)
+                if (Modifier.isAbstract(modifiers)) {
+                    throw new RuntimeException("@Dispatch method must be concrete, not abstract: " + fullName);
+                }
+
+                boolean isStatic = Modifier.isStatic(modifiers);
                 if (!isStatic && instance == null) {
-                    throw new RuntimeException("Instance method " + aclass.getCanonicalName() + "." + methods[i].getName()
+                    throw new RuntimeException("Instance method " + fullName
                             + " requires autoregister(instance), not autoregister(Class)");
                 }
+
+                // Parameter types must be concrete classes, not interfaces or abstract classes
+                Parameter[] parameters = methods[i].getParameters();
+                for (int t = 0; t < parameters.length; ++t) {
+                    Class<?> paramType = primitiveToBoxed(parameters[t].getType());
+                    if (paramType.isInterface()) {
+                        throw new RuntimeException("@Dispatch parameter types must be concrete classes, not interfaces: "
+                                + fullName + " parameter " + t + " (" + paramType.getCanonicalName() + ")");
+                    }
+                    if (Modifier.isAbstract(paramType.getModifiers())) {
+                        throw new RuntimeException("@Dispatch parameter types must be concrete classes, not abstract: "
+                                + fullName + " parameter " + t + " (" + paramType.getCanonicalName() + ")");
+                    }
+                }
+
                 autoregister(aclass, methods[i], i, isStatic, instance);
             }
         }
@@ -192,25 +215,19 @@ public class DispatchTableAbstract<FUNCTOR> {
 
     // --- Class<?> types helpers
 
-    // the distance from type to targetType in count of inheritance steps
+    // the distance from type to targetType in count of superclass steps
     // - if 'type' does not inherit from 'targetType' => -1
     // - if 'type' is targetType => 0
     // - if 'type's superclass is 'targetType' => 1
     // - etc.
+    // Only concrete class hierarchies are considered — interface and abstract
+    // parameter types are rejected at registration time, so targetType is
+    // always a concrete class and the superclass walk is well-defined.
     static int distance(Class<?> targetType, Class<?> type) {
         if (!targetType.isAssignableFrom(type)) return -1;
-        if (targetType == type) return 0;
-        if (targetType.isInterface()) {
-            // BFS through superclass chain counting steps; interface match = first class where it appears
-            for (int d = 0; ; ++d) {
-                type = type.getSuperclass();
-                if (!targetType.isAssignableFrom(type)) return d + 1;
-            }
-        } else {
-            for (int d = 0; ; ++d) {
-                type = type.getSuperclass();
-                if (type == targetType) return d + 1;
-            }
+        for (int d = 0; ; ++d) {
+            if (type == targetType) return d;
+            type = type.getSuperclass();
         }
     }
 
