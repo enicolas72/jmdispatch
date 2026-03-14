@@ -4,15 +4,17 @@ A pure Java **multiple dispatch** (multimethod) framework that selects method im
 
 Java's built-in virtual dispatch is single dispatch — the method called depends only on the runtime type of `this`. JMDispatch extends this to **two or more arguments**, choosing the best-matching registered handler based on all argument types simultaneously.
 
-## How It Works
-
-1. Annotate methods with `@Dispatch` (static or instance)
-2. Create a dispatch table and auto-register handlers from a class or instance
-3. Call `dispatch(...)` — the framework finds the closest matching handler by computing inheritance distance across all arguments
-
-Under the hood, JMDispatch uses **ASM bytecode generation** to create functor implementations that invoke your methods directly, avoiding reflection overhead at dispatch time.
-
 ## Quick Start
+
+### Maven dependency
+
+```xml
+<dependency>
+    <groupId>net.eric-nicolas</groupId>
+    <artifactId>jmdispatch</artifactId>
+    <version>1.0</version>
+</dependency>
+```
 
 ### Static handlers
 
@@ -96,6 +98,14 @@ DispatchTableN table = new DispatchTableN(3)
 Object result = table.dispatch(arg1, arg2, arg3);
 ```
 
+## How It Works
+
+1. Annotate methods with `@Dispatch` (static or instance)
+2. Create a dispatch table and auto-register handlers from a class or instance
+3. Call `dispatch(...)` — the framework finds the closest matching handler by computing inheritance distance across all arguments
+
+Under the hood, JMDispatch uses **ASM bytecode generation** to create functor implementations that invoke your methods directly, avoiding reflection overhead at dispatch time.
+
 ## Dispatch Algorithm
 
 - Computes **inheritance distance** (number of `extends` steps) from each actual argument type to each registered parameter type
@@ -103,10 +113,24 @@ Object result = table.dispatch(arg1, arg2, arg3);
 - Selects the handler with the lowest total distance
 - Throws `DispatchAmbiguousException` if multiple handlers tie
 - Throws `DispatchNoMatchException` if no compatible handler exists
-- **Caches** resolved dispatches for fast repeated lookups
+- **Caches** resolved dispatches for fast repeated lookups — first call pays the lookup cost, subsequent calls hit the fast exact-match path
 - Handler parameter types must be **concrete classes** (not interfaces or abstract classes)
 - `@Dispatch` methods must be **concrete** (not abstract)
 - All errors are typed: `InvalidDispatchException` at registration, `DispatchNoMatchException` / `DispatchAmbiguousException` at dispatch
+
+## Design Decisions
+
+**Concrete class hierarchies only.** Dispatch operates on concrete classes, not interfaces or abstract classes. Inheritance distance is computed by walking the superclass chain (`getSuperclass()`), which is well-defined and unambiguous — each class has exactly one superclass path to `Object`. Interfaces would introduce multiple inheritance paths (diamond problem), making distance computation ambiguous and order-dependent. Since you always dispatch on *actual objects* (which are always instances of concrete classes), restricting handler parameter types to concrete classes is both simpler and correct.
+
+**Linear scan for exact match.** The `findExact()` lookup uses a linear scan with pointer comparison (`keys[i][0] == type1`), not a `HashMap`. Benchmarking showed that `HashMap` variants (including zero-allocation `ConcurrentHashMap` + `ThreadLocal` probe keys + identity hash codes) made exact-hit dispatch 4-7x slower (2.2 → 8.8–14.2 ns/op for 2 handlers). The pointer-comparison loop is so tight that even at 20 handlers (6.8 ns) it beats the `HashMap`'s constant overhead. The crossover point would be ~50+ handlers, which is far beyond typical use.
+
+**ASM bytecode generation.** Each registered handler gets a generated functor class that calls the target method directly via `invokeStatic` or `invokeVirtual`. This avoids all reflection overhead at dispatch time — the generated functors are essentially zero-overhead wrappers.
+
+**Typed exceptions.** All exceptions are typed: `DispatchNoMatchException` and `DispatchAmbiguousException` for dispatch-time errors, `InvalidDispatchException` for registration-time validation errors (abstract methods, interface/abstract parameter types, duplicate signatures, wrong argument count). No raw `RuntimeException` in user-facing paths.
+
+## Performance
+
+The hot path (exact-match, warm cache) benchmarks at **~2-7 ns/op** depending on table size. The library is designed for dispatch-heavy patterns like event handling and message routing where this overhead is negligible.
 
 ## API Reference
 
