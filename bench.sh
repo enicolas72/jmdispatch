@@ -16,13 +16,6 @@ mvn -q compile test-compile
 CP=$(mvn -q dependency:build-classpath -Dmdep.outputFile=/dev/stdout)
 CP="target/classes:target/test-classes:$CP"
 
-# Compile bench sources
-echo "=== Compiling benchmarks ==="
-javac -cp "$CP" -d target/bench-classes \
-    src/bench/java/net/eric_nicolas/jmdispatch/DispatchBenchmark.java
-
-CP="target/bench-classes:$CP"
-
 # ── JVM flags ────────────────────────────────────────────────────────────
 JVM_OPTS="-XX:+UseSerialGC -Xms512m -Xmx512m"
 
