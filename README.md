@@ -128,6 +128,22 @@ Under the hood, JMDispatch uses **ASM bytecode generation** to create functor im
 
 **Typed exceptions.** All exceptions are typed: `DispatchNoMatchException` and `DispatchAmbiguousException` for dispatch-time errors, `InvalidDispatchException` for registration-time validation errors (abstract methods, interface/abstract parameter types, duplicate signatures, wrong argument count). No raw `RuntimeException` in user-facing paths.
 
+## Sample: Game Object Collision
+
+The [collision sample](SAMPLE-COLLISION.md) compares jmdispatch against the classic **visitor pattern** for the canonical double-dispatch problem: game object collision resolution where behavior depends on both object types. It implements the same 6 collision pairs (Spaceship, Asteroid, Laser) using both approaches and shows how multi-dispatch eliminates the interface ceremony, wrapper classes, and scattered reverse-dispatch methods that the visitor pattern requires.
+
+## Known Issues
+
+<!-- FIXME: @Dispatch methods must currently be `public`, not package-private.
+     The ASM-generated functor classes are loaded by a separate classloader
+     (FunctorImplementationBuilderAbstract$MyClassLoader), which cannot access
+     package-private methods in the registering class. This is a framework limitation
+     that should be fixed — ideally the generated classes should be defined in the
+     same package/classloader as the handler, or the framework should use
+     MethodHandles.Lookup to bypass access restrictions. -->
+
+- **`@Dispatch` methods must be `public`.** The ASM-generated functor classes are loaded by an internal classloader that cannot access package-private methods. Declaring handlers as `public` is the current workaround. A future fix should define generated classes in the same classloader/package as the handler, or use `MethodHandles.Lookup` to bypass access restrictions.
+
 ## Performance
 
 The hot path (exact-match, warm cache) benchmarks at **~2-7 ns/op** depending on table size. The library is designed for dispatch-heavy patterns like event handling and message routing where this overhead is negligible.
