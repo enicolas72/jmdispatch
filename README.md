@@ -132,6 +132,10 @@ Under the hood, JMDispatch uses **ASM bytecode generation** to create functor im
 
 The [collision sample](SAMPLE-COLLISION.md) compares jmdispatch against the classic **visitor pattern** for the canonical double-dispatch problem: game object collision resolution where behavior depends on both object types. It implements the same 6 collision pairs (Spaceship, Asteroid, Laser) using both approaches and shows how multi-dispatch eliminates the interface ceremony, wrapper classes, and scattered reverse-dispatch methods that the visitor pattern requires.
 
+## Sample: Multi-Format Serialization
+
+The [serialization sample](SAMPLE-SERIALIZATION.md) tackles the **2D dispatch matrix** problem: serializing domain objects (User, Product, Order) to multiple formats (JSON, XML, Binary, CSV) where behavior depends on both the object type and the target format. It compares three approaches — format logic in domain objects, instanceof chains in serializers, and multi-dispatch — showing how jmdispatch is the only solution that scales cleanly in both dimensions without modifying existing code.
+
 ## Known Issues
 
 <!-- FIXME: @Dispatch methods must currently be `public`, not package-private.
