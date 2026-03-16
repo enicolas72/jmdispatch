@@ -6,8 +6,8 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 // public void f(Object[] values) {
 //    aclass.amethod((types[0])values[0], (types[1])values[1], ...);
 // }
-public class FunctorImplementationBuilderN extends FunctorImplementationBuilderAbstract {
-    FunctorImplementationBuilderN(int nTypes) {
+public class FunctorImplementationBuilderArray extends FunctorImplementationBuilderAbstract {
+    FunctorImplementationBuilderArray(int nTypes) {
         super(FunctorN.class, nTypes);
     }
 

@@ -6,9 +6,9 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 // public void f(object v1, Object v2) {
 //    aclass.amethod((type[0]) v1, (type[1]) v2);
 // }
-public class FunctorImplementationBuilder2 extends FunctorImplementationBuilderAbstract {
-    FunctorImplementationBuilder2() {
-        super(Functor2.class, 2);
+public class FunctorImplementationBuilderDirect extends FunctorImplementationBuilderAbstract {
+    FunctorImplementationBuilderDirect(Class<?> classOfFunctor, int nTypes) {
+        super(classOfFunctor, nTypes);
     }
 
     @Override

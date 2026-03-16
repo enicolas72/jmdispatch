@@ -2,7 +2,7 @@
 
 A pure Java **multiple dispatch** (multimethod) framework that selects method implementations at runtime based on the actual types of all arguments, not just the receiver.
 
-Java's built-in virtual dispatch is single dispatch — the method called depends only on the runtime type of `this`. JMDispatch extends this to **two or more arguments**, choosing the best-matching registered handler based on all argument types simultaneously.
+Java's built-in virtual dispatch is single dispatch — the method called depends only on the runtime type of `this`. JMDispatch extends this to **one or more arguments**, choosing the best-matching registered handler based on all argument types simultaneously.
 
 ## Quick Start
 
@@ -12,11 +12,35 @@ Java's built-in virtual dispatch is single dispatch — the method called depend
 <dependency>
     <groupId>net.eric-nicolas</groupId>
     <artifactId>jmdispatch</artifactId>
-    <version>1.0</version>
+    <version>1.1</version>
 </dependency>
 ```
 
-### Static handlers
+### Single-argument dispatch
+
+```java
+import net.eric_nicolas.jmdispatch.*;
+
+public class Shapes {
+
+    @Dispatch
+    public static String describe(Shape s) { return "generic shape"; }
+
+    @Dispatch
+    public static String describe(Circle c) { return "circle r=" + c.radius; }
+
+    private static final DispatchTable1 table =
+        new DispatchTable1().autoregister(Shapes.class);
+
+    public static String describe(Object obj) {
+        return (String) table.dispatch(obj);
+    }
+}
+```
+
+Calling `describe(myCircle)` routes to the `Circle` handler; passing any other `Shape` subclass falls back to the generic handler.
+
+### Two-argument dispatch
 
 ```java
 import net.eric_nicolas.jmdispatch.*;
@@ -157,6 +181,7 @@ The hot path (exact-match, warm cache) benchmarks at **~2-7 ns/op** depending on
 | Class | Description |
 |---|---|
 | `@Dispatch` | Annotation to mark methods (static or instance) as dispatch handlers |
+| `DispatchTable1` | Dispatch table optimized for 1-argument dispatch |
 | `DispatchTable2` | Dispatch table optimized for 2-argument dispatch |
 | `DispatchTableN` | Dispatch table for N-argument dispatch (N specified at construction) |
 | `DispatchNoMatchException` | Thrown when no handler matches the argument types |

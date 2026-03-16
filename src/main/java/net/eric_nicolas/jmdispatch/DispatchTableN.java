@@ -34,7 +34,7 @@ public class DispatchTableN extends DispatchTableAbstract<FunctorN> {
      * @throws IllegalArgumentException if {@code nTypes < 2}
      */
     public DispatchTableN(int nTypes) {
-        super(nTypes, FunctorN.class, new FunctorImplementationBuilderN(nTypes));
+        super(nTypes, FunctorN.class, new FunctorImplementationBuilderArray(nTypes));
         if (nTypes < 2) throw new IllegalArgumentException("DispatchTableN requires nTypes >= 2, got " + nTypes);
     }
 
