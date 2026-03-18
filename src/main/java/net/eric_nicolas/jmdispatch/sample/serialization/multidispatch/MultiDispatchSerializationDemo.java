@@ -1,7 +1,7 @@
 package net.eric_nicolas.jmdispatch.sample.serialization.multidispatch;
 
 import net.eric_nicolas.jmdispatch.Dispatch;
-import net.eric_nicolas.jmdispatch.DispatchTable2;
+import net.eric_nicolas.jmdispatch.DispatchTable;
 import net.eric_nicolas.jmdispatch.sample.serialization.*;
 
 import java.util.ArrayList;
@@ -9,7 +9,7 @@ import java.util.List;
 
 public class MultiDispatchSerializationDemo {
 
-    private static final DispatchTable2 TABLE = new DispatchTable2()
+    private static final DispatchTable TABLE = DispatchTable.factory(2)
             .autoregister(MultiDispatchSerializationDemo.class);
 
     // --- User ---

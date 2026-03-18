@@ -12,7 +12,7 @@ Java's built-in virtual dispatch is single dispatch — the method called depend
 <dependency>
     <groupId>net.eric-nicolas</groupId>
     <artifactId>jmdispatch</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
 </dependency>
 ```
 
@@ -29,8 +29,8 @@ public class Shapes {
     @Dispatch
     public static String describe(Circle c) { return "circle r=" + c.radius; }
 
-    private static final DispatchTable1 table =
-        new DispatchTable1().autoregister(Shapes.class);
+    private static final DispatchTable table =
+        DispatchTable.factory(1).autoregister(Shapes.class);
 
     public static String describe(Object obj) {
         return (String) table.dispatch(obj);
@@ -57,8 +57,8 @@ public class Collisions {
         System.out.println("Circle-Rectangle collision");
     }
 
-    private static final DispatchTable2 table =
-        new DispatchTable2().autoregister(Collisions.class);
+    private static final DispatchTable table =
+        DispatchTable.factory(2).autoregister(Collisions.class);
 
     public static void handleCollision(Shape a, Shape b) {
         table.dispatch(a, b);
@@ -90,7 +90,7 @@ public class CollisionHandler {
 }
 
 // Register an instance — its @Dispatch methods are bound to it
-DispatchTable2 table = new DispatchTable2()
+DispatchTable table = DispatchTable.factory(2)
     .autoregister(new CollisionHandler(myLogger));
 
 table.dispatch(myCircle, myRect); // calls instance method on the registered handler
@@ -115,7 +115,7 @@ Object result = table.dispatch(myCircle, myScale); // returns a boxed Integer
 ### Three-or-more-argument dispatch
 
 ```java
-DispatchTableN table = new DispatchTableN(3)
+DispatchTable table = DispatchTable.factory(3)
     .autoregister(MyHandlers.class);    // static handlers
     // or .autoregister(new MyHandlers());  // instance handlers
 
@@ -164,7 +164,7 @@ The [serialization sample](SAMPLE-SERIALIZATION.md) tackles the **2D dispatch ma
 
 <!-- FIXME: @Dispatch methods must currently be `public`, not package-private.
      The ASM-generated functor classes are loaded by a separate classloader
-     (FunctorImplementationBuilderAbstract$MyClassLoader), which cannot access
+     (impl.FunctorImplementationBuilderAbstract$MyClassLoader), which cannot access
      package-private methods in the registering class. This is a framework limitation
      that should be fixed — ideally the generated classes should be defined in the
      same package/classloader as the handler, or the framework should use
@@ -181,9 +181,7 @@ The hot path (exact-match, warm cache) benchmarks at **~2-7 ns/op** depending on
 | Class | Description |
 |---|---|
 | `@Dispatch` | Annotation to mark methods (static or instance) as dispatch handlers |
-| `DispatchTable1` | Dispatch table optimized for 1-argument dispatch |
-| `DispatchTable2` | Dispatch table optimized for 2-argument dispatch |
-| `DispatchTableN` | Dispatch table for N-argument dispatch (N specified at construction) |
+| `DispatchTable` | Dispatch table interface — create via `DispatchTable.factory(n)` where n is the number of dispatch arguments |
 | `DispatchNoMatchException` | Thrown when no handler matches the argument types |
 | `DispatchAmbiguousException` | Thrown when multiple handlers match with equal distance |
 | `InvalidDispatchException` | Thrown when handler registration is invalid (abstract method, interface/abstract parameter type, etc.) |

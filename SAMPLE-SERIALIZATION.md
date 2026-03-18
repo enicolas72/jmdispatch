@@ -105,10 +105,10 @@ public static String serialize(DomainObject o, Format f) {
 }
 ```
 
-A single `DispatchTable2` routes to the right handler at runtime:
+A single `DispatchTable` routes to the right handler at runtime:
 
 ```java
-private static final DispatchTable2 TABLE = new DispatchTable2()
+private static final DispatchTable table = DispatchTable.factory(2)
         .autoregister(MultiDispatchSerializationDemo.class);
 
 TABLE.dispatch(user, jsonFormat);  // → serialize(User, JsonFormat)

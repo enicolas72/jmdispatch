@@ -7,8 +7,9 @@ package net.eric_nicolas.jmdispatch;
  * types are assignable from the actual argument types. This includes the case where one or
  * more arguments are {@code null}, since null has no runtime type to match against.
  *
- * @see DispatchTable2#dispatch(Object, Object)
- * @see DispatchTableN#dispatch(Object...)
+ * @see DispatchTable#dispatch(Object)
+ * @see DispatchTable#dispatch(Object, Object)
+ * @see DispatchTable#dispatch(Object...)
  */
 public class DispatchNoMatchException extends RuntimeException {
 

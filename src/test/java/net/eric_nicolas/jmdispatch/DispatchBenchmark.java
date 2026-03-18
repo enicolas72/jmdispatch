@@ -36,7 +36,7 @@ public class DispatchBenchmark {
 
     // ── Handler classes ──────────────────────────────────────────────────
 
-    // 2-handler classes for DispatchTable2
+    // 2-handler classes for DispatchTable
     public static class Handlers2_Size2 {
         @Dispatch public static String handle(A a, X x) { return "AX"; }
         @Dispatch public static String handle(B b, Y y) { return "BY"; }
@@ -97,7 +97,7 @@ public class DispatchBenchmark {
 
     // ── Benchmark methods ────────────────────────────────────────────────
 
-    static void benchExactHit2(DispatchTable2 table) {
+    static void benchExactHit2(DispatchTable table) {
         A a = new A(1);
         X x = new X(2);
         for (int i = 0; i < OPS_PER_ITERATION; i++) {
@@ -105,7 +105,7 @@ public class DispatchBenchmark {
         }
     }
 
-    static void benchExactHitN(DispatchTableN table) {
+    static void benchExactHitN(DispatchTable table) {
         A a = new A(1);
         X x = new X(2);
         A a2 = new A(3);
@@ -114,7 +114,7 @@ public class DispatchBenchmark {
         }
     }
 
-    static void benchColdFallback2(DispatchTable2[] tables) {
+    static void benchColdFallback2(DispatchTable[] tables) {
         // Each table is fresh — dispatching B,X triggers findClosest (B is subtype of A)
         B b = new B(1, 2);
         X x = new X(3);
@@ -123,7 +123,7 @@ public class DispatchBenchmark {
         }
     }
 
-    static void benchColdFallbackN(DispatchTableN[] tables) {
+    static void benchColdFallbackN(DispatchTable[] tables) {
         B b = new B(1, 2);
         X x = new X(3);
         B b2 = new B(4, 5);
@@ -132,7 +132,7 @@ public class DispatchBenchmark {
         }
     }
 
-    static void benchScaling2(DispatchTable2 table) {
+    static void benchScaling2(DispatchTable table) {
         A a = new A(1);
         X x = new X(2);
         for (int i = 0; i < OPS_PER_ITERATION; i++) {
@@ -182,19 +182,19 @@ public class DispatchBenchmark {
 
     // ── Cold table factories ─────────────────────────────────────────────
 
-    static DispatchTable2[] makeColdTables2(int count) {
-        DispatchTable2[] tables = new DispatchTable2[count];
+    static DispatchTable[] makeColdTables2(int count) {
+        DispatchTable[] tables = new DispatchTable[count];
         for (int i = 0; i < count; i++) {
-            tables[i] = new DispatchTable2();
+            tables[i] = DispatchTable.factory(2);
             tables[i].autoregister(Handlers2_Size2.class);
         }
         return tables;
     }
 
-    static DispatchTableN[] makeColdTablesN(int count) {
-        DispatchTableN[] tables = new DispatchTableN[count];
+    static DispatchTable[] makeColdTablesN(int count) {
+        DispatchTable[] tables = new DispatchTable[count];
         for (int i = 0; i < count; i++) {
-            tables[i] = new DispatchTableN(3);
+            tables[i] = DispatchTable.factory(3);
             tables[i].autoregister(HandlersN_Size2.class);
         }
         return tables;
@@ -203,50 +203,50 @@ public class DispatchBenchmark {
     // ── Scenarios ────────────────────────────────────────────────────────
 
     static void scenario_exactHit2() {
-        DispatchTable2 table = new DispatchTable2();
+        DispatchTable table = DispatchTable.factory(2);
         table.autoregister(Handlers2_Size2.class);
         table.dispatch(new A(0), new X(0));
         measure("exactHit2arg", null, () -> benchExactHit2(table));
     }
 
     static void scenario_exactHitN() {
-        DispatchTableN table = new DispatchTableN(3);
+        DispatchTable table = DispatchTable.factory(3);
         table.autoregister(HandlersN_Size2.class);
         table.dispatch(new A(0), new X(0), new A(0));
         measure("exactHitN(3)arg", null, () -> benchExactHitN(table));
     }
 
     static void scenario_coldFallback2() {
-        final DispatchTable2[][] holder = new DispatchTable2[1][];
+        final DispatchTable[][] holder = new DispatchTable[1][];
         measure("coldFallback2arg", COLD_OPS_PER_ITERATION,
                 () -> holder[0] = makeColdTables2(COLD_OPS_PER_ITERATION),
                 () -> benchColdFallback2(holder[0]));
     }
 
     static void scenario_coldFallbackN() {
-        final DispatchTableN[][] holder = new DispatchTableN[1][];
+        final DispatchTable[][] holder = new DispatchTable[1][];
         measure("coldFallbackN(3)arg", COLD_OPS_PER_ITERATION,
                 () -> holder[0] = makeColdTablesN(COLD_OPS_PER_ITERATION),
                 () -> benchColdFallbackN(holder[0]));
     }
 
     static void scenario_scaling() {
-        DispatchTable2 t2 = new DispatchTable2();
+        DispatchTable t2 = DispatchTable.factory(2);
         t2.autoregister(Handlers2_Size2.class);
         t2.dispatch(new A(0), new X(0));
         measure("scaling_2handlers", null, () -> benchScaling2(t2));
 
-        DispatchTable2 t5 = new DispatchTable2();
+        DispatchTable t5 = DispatchTable.factory(2);
         t5.autoregister(Handlers2_Size5.class);
         t5.dispatch(new A(0), new X(0));
         measure("scaling_5handlers", null, () -> benchScaling2(t5));
 
-        DispatchTable2 t10 = new DispatchTable2();
+        DispatchTable t10 = DispatchTable.factory(2);
         t10.autoregister(Handlers2_Size10.class);
         t10.dispatch(new A(0), new X(0));
         measure("scaling_10handlers", null, () -> benchScaling2(t10));
 
-        DispatchTable2 t20 = new DispatchTable2();
+        DispatchTable t20 = DispatchTable.factory(2);
         t20.autoregister(Handlers2_Size20.class);
         t20.dispatch(new A(0), new X(0));
         measure("scaling_20handlers", null, () -> benchScaling2(t20));

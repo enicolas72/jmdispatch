@@ -13,8 +13,8 @@ package net.eric_nicolas.jmdispatch;
  *   <li>A handler with the same parameter type signature is already registered</li>
  * </ul>
  *
- * @see DispatchTable2#autoregister(Class)
- * @see DispatchTableN#autoregister(Class)
+ * @see DispatchTable#autoregister(Class)
+ * @see DispatchTable#autoregister(Object)
  */
 public class InvalidDispatchException extends RuntimeException {
 

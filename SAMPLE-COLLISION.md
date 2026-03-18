@@ -72,10 +72,10 @@ public static String collide(Asteroid a, Spaceship s) {
 // ... 8 more handlers (6 unique pairs + symmetric orderings + fallback)
 ```
 
-A `DispatchTable2` auto-registers all handlers and dispatches at runtime:
+A `DispatchTable` auto-registers all handlers and dispatches at runtime:
 
 ```java
-private static final DispatchTable2 TABLE = new DispatchTable2()
+private static final DispatchTable table = DispatchTable.factory(2)
         .autoregister(MultiDispatchCollisionDemo.class);
 
 // dispatch using plain model objects — no wrappers needed

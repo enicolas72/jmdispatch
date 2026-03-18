@@ -8,9 +8,9 @@ import java.lang.annotation.Target;
 /**
  * Marks a method as a dispatch handler for multiple dispatch.
  *
- * <p>Annotated methods are discovered by {@link DispatchTable2#autoregister} and
- * {@link DispatchTableN#autoregister} and registered as candidate handlers in the
- * dispatch table. At dispatch time, the framework selects the best-matching handler
+ * <p>Annotated methods are discovered by {@link DispatchTable#autoregister(Class)}
+ * or {@link DispatchTable#autoregister(Object)} and registered as candidate handlers
+ * in the dispatch table. At dispatch time, the framework selects the best-matching handler
  * based on the runtime types of all arguments.
  *
  * <p>Annotated methods must be <b>concrete</b> (not abstract) and may be either
@@ -27,8 +27,7 @@ import java.lang.annotation.Target;
  * boxed and returned as {@code Object} from {@code dispatch()}; void handlers
  * return {@code null}.
  *
- * @see DispatchTable2
- * @see DispatchTableN
+ * @see DispatchTable
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})

@@ -11,8 +11,9 @@ package net.eric_nicolas.jmdispatch;
  * <p>To resolve ambiguity, register a more specific handler whose parameter types exactly
  * match (or more closely match) the argument types in question.
  *
- * @see DispatchTable2#dispatch(Object, Object)
- * @see DispatchTableN#dispatch(Object...)
+ * @see DispatchTable#dispatch(Object)
+ * @see DispatchTable#dispatch(Object, Object)
+ * @see DispatchTable#dispatch(Object...)
  */
 public class DispatchAmbiguousException extends RuntimeException {
 
