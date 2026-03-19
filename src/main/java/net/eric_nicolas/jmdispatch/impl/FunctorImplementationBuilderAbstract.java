@@ -11,6 +11,9 @@ import org.objectweb.asm.util.TraceClassVisitor;
 
 import java.io.PrintWriter;
 import java.lang.reflect.Parameter;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class FunctorImplementationBuilderAbstract {
 
@@ -26,14 +29,24 @@ public abstract class FunctorImplementationBuilderAbstract {
     }
 
     static class MyClassLoader extends ClassLoader {
+        MyClassLoader(ClassLoader parent) {
+            super(parent);
+        }
         public Class<?> defineClass(String name, byte[] b) {
             return defineClass(name, b, 0, b.length);
         }
     }
 
-    final MyClassLoader MY_CLASS_LOADER = new MyClassLoader();
+    private static final Map<ClassLoader, MyClassLoader> CLASS_LOADERS = new ConcurrentHashMap<>();
+    private static final AtomicLong CLASS_COUNTER = new AtomicLong();
 
-    Class<?> buildLambaImplementationClass(Class<?> aclass, java.lang.reflect.Method amethod, int n, boolean isStatic) {
+    private static MyClassLoader getClassLoader(Class<?> aclass) {
+        ClassLoader parent = aclass.getClassLoader();
+        if (parent == null) parent = ClassLoader.getSystemClassLoader();
+        return CLASS_LOADERS.computeIfAbsent(parent, MyClassLoader::new);
+    }
+
+    Class<?> buildLambaImplementationClass(Class<?> aclass, java.lang.reflect.Method amethod, boolean isStatic) {
         // get the types of the method's parameters
         Parameter[] parameters = amethod.getParameters();
         if (parameters.length != nTypes) {
@@ -43,7 +56,7 @@ public abstract class FunctorImplementationBuilderAbstract {
         for (int i = 0; i < nTypes; ++i) types[i] = Type.getType(parameters[i].getType());
 
         // build a unique class name (in the same package as the target method)
-        String className = aclass.getCanonicalName() + "-" + amethod.getName() + "-" + n;
+        String className = aclass.getCanonicalName() + "-" + amethod.getName() + "-" + CLASS_COUNTER.getAndIncrement();
 
         Type targetClass = Type.getType(aclass);
         Method targetMethod = Method.getMethod(amethod);
@@ -60,7 +73,7 @@ public abstract class FunctorImplementationBuilderAbstract {
         byte[] byteCode = cw.toByteArray();
 
         // return the created class, for further instantiation
-        return MY_CLASS_LOADER.defineClass(className, byteCode);
+        return getClassLoader(aclass).defineClass(className, byteCode);
     }
 
     private static final String TARGET_FIELD = "target";

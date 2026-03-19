@@ -97,14 +97,14 @@ public class DispatchTableAbstract<FUNCTOR> {
                     }
                 }
 
-                registerMethod(aclass, methods[i], i, isStatic ? null : instance);
+                registerMethod(aclass, methods[i], isStatic ? null : instance);
             }
         }
         return this;
     }
 
-    private void registerMethod(Class<?> aclass, java.lang.reflect.Method method, int i, Object instance) {
-        Class<?> functorImplementation = functorImplementationBuilder.buildLambaImplementationClass(aclass, method, i, instance == null);
+    private void registerMethod(Class<?> aclass, java.lang.reflect.Method method, Object instance) {
+        Class<?> functorImplementation = functorImplementationBuilder.buildLambaImplementationClass(aclass, method, instance == null);
         FUNCTOR functor = instanciateFunctor(functorImplementation, instance);
 
         //
